@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% block content %}
+<p><a href="{{ url_for('dashboard') if is_new else url_for('building_detail', building_id=building_id) }}">← Back</a></p>
+<div class="card narrow">
+  <h1>{{ "New building" if is_new else "Edit building" }}</h1>
+  <form method="post">
+    <input type="hidden" name="csrf" value="{{ csrf_token }}">
+    <label>Name <input name="name" required value="{{ building.name }}" placeholder="The Maple Apartments"></label>
+    <label>Address <span class="muted">(used as the default event location)</span>
+      <input name="address" value="{{ building.address or '' }}" placeholder="123 Main St, Springfield">
+    </label>
+    <label>Timezone
+      <select name="timezone">
+        {% for tz in timezones %}<option {{ "selected" if tz == building.timezone }}>{{ tz }}</option>{% endfor %}
+      </select>
+    </label>
+    <button class="primary">{{ "Create building" if is_new else "Save" }}</button>
+  </form>
+</div>
+{% endblock %}

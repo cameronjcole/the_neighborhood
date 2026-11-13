@@ -1,0 +1,83 @@
+{% extends "base.html" %}
+{% macro event_row(e) %}
+  <li class="event-row">
+    <div class="when">
+      <strong>{{ e.start_local | pretty_date }}</strong>
+      <span class="muted">{% if e.all_day %}All day{% if e.end_local[:10] != e.start_local[:10] %} → {{ e.end_local | pretty_date }}{% endif %}
+        {% else %}{{ e.start_local | pretty_time }} – {{ e.end_local | pretty_time }}{% endif %}</span>
+    </div>
+    <div class="what">
+      <div class="title">{{ e.title }}</div>
+      {% if e.location %}<div class="muted">{{ e.location }}</div>{% endif %}
+    </div>
+    <div class="actions">
+      <a href="{{ url_for('event_edit', event_id=e.id) }}">Edit</a>
+      <a href="{{ url_for('event_new', building_id=building.id) }}?copy={{ e.id }}">Duplicate</a>
+      <form method="post" action="{{ url_for('event_delete', event_id=e.id) }}" class="inline"
+            onsubmit="return confirm('Delete this event?')">
+        <input type="hidden" name="csrf" value="{{ csrf_token }}">
+        <button class="link danger">Delete</button>
+      </form>
+    </div>
+  </li>
+{% endmacro %}
+{% block content %}
+<p><a href="{{ url_for('dashboard') }}">← All buildings</a></p>
+<div class="row-between">
+  <div>
+    <h1>{{ building.name }}</h1>
+    <div class="muted">{{ building.address or "" }} · times in {{ building.timezone }} ({{ tz }})</div>
+  </div>
+  <a href="{{ url_for('building_edit', building_id=building.id) }}">Edit building</a>
+</div>
+
+<section class="card share">
+  <img class="qr" src="{{ url_for('building_qr', building_id=building.id, fmt='svg') }}" alt="QR code for the resident event page">
+  <div class="share-body">
+    <h2>Share with residents</h2>
+    <p class="muted">Post the QR code in the lobby or paste the link in a newsletter. Anyone with it can view events and add them to their calendar.</p>
+    <div class="copy-row">
+      <input id="share-url" readonly value="{{ share_url }}">
+      <button type="button" onclick="copyShare(this)">Copy link</button>
+    </div>
+    <div class="button-row">
+      <a class="button" href="{{ share_url }}" target="_blank">Open resident page</a>
+      <a class="button" href="{{ url_for('building_qr', building_id=building.id, fmt='png') }}?download=1">Download QR (PNG)</a>
+      <a class="button" href="{{ url_for('building_qr', building_id=building.id, fmt='svg') }}?download=1">Download QR (SVG)</a>
+    </div>
+    <form method="post" action="{{ url_for('regenerate_link', building_id=building.id) }}"
+          onsubmit="return confirm('Generate a new link? The current link and printed QR codes will stop working.')">
+      <input type="hidden" name="csrf" value="{{ csrf_token }}">
+      <button class="link danger">Regenerate link</button>
+    </form>
+  </div>
+</section>
+
+<div class="row-between">
+  <h2>Upcoming events ({{ upcoming | length }})</h2>
+  <a class="button primary" href="{{ url_for('event_new', building_id=building.id) }}">+ New event</a>
+</div>
+{% if upcoming %}
+  <ul class="list card">{% for e in upcoming %}{{ event_row(e) }}{% endfor %}</ul>
+{% else %}
+  <div class="card empty">No upcoming events. Add one to get started.</div>
+{% endif %}
+
+{% if past %}
+  <details class="past">
+    <summary>Past events ({{ past | length }})</summary>
+    <ul class="list card">{% for e in past | reverse %}{{ event_row(e) }}{% endfor %}</ul>
+  </details>
+{% endif %}
+{% endblock %}
+{% block scripts %}
+<script>
+  function copyShare(btn) {
+    const input = document.getElementById("share-url");
+    navigator.clipboard.writeText(input.value).then(
+      () => { btn.textContent = "Copied!"; setTimeout(() => (btn.textContent = "Copy link"), 1500); },
+      () => { input.select(); }
+    );
+  }
+</script>
+{% endblock %}

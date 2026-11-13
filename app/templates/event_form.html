@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+{% block content %}
+<p><a href="{{ url_for('building_detail', building_id=building.id) }}">← {{ building.name }}</a></p>
+<div class="card narrow">
+  <h1>{{ "New event" if is_new else "Edit event" }}</h1>
+  <form method="post" id="event-form">
+    <input type="hidden" name="csrf" value="{{ csrf_token }}">
+    <label>Title <input name="title" required value="{{ event.title }}" placeholder="Rooftop movie night"></label>
+
+    <label class="check"><input type="checkbox" name="all_day" id="all_day" {{ "checked" if event.all_day }}> All-day event</label>
+
+    <div class="grid2">
+      <label>Start date <input type="date" name="start_date" id="start_date" required value="{{ event.start_local[:10] }}"></label>
+      <label class="timed">Start time <input type="time" name="start_time" value="{{ event.start_local[11:16] }}"></label>
+      <label>End date <input type="date" name="end_date" id="end_date" required value="{{ event.end_local[:10] }}"></label>
+      <label class="timed">End time <input type="time" name="end_time" value="{{ event.end_local[11:16] }}"></label>
+    </div>
+    <p class="muted small">Times are in {{ building.timezone }}.</p>
+
+    <label>Location <input name="location" value="{{ event.location or '' }}" placeholder="Rooftop lounge, 12th floor"></label>
+    <label>Description <textarea name="description" rows="5" placeholder="What to expect, what to bring…">{{ event.description or '' }}</textarea></label>
+    <label>Link <span class="muted">(optional: sign-up form, flyer, etc.)</span>
+      <input type="url" name="url" value="{{ event.url or '' }}" placeholder="https://">
+    </label>
+    <label>Organizer <span class="muted">(optional: name or email)</span>
+      <input name="organizer" value="{{ event.organizer or '' }}">
+    </label>
+    <button class="primary">{{ "Add event" if is_new else "Save changes" }}</button>
+  </form>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+  const allDay = document.getElementById("all_day");
+  const startDate = document.getElementById("start_date");
+  const endDate = document.getElementById("end_date");
+  function syncAllDay() {
+    document.querySelectorAll(".timed").forEach((el) => {
+      el.hidden = allDay.checked;
+      el.querySelector("input").required = !allDay.checked;
+    });
+  }
+  allDay.addEventListener("change", syncAllDay);
+  // Keep the end date from landing before the start date.
+  startDate.addEventListener("change", () => {
+    if (!endDate.value || endDate.value < startDate.value) endDate.value = startDate.value;
+  });
+  syncAllDay();
+</script>
+{% endblock %}
