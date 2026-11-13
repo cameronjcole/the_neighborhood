@@ -7,7 +7,7 @@ from zoneinfo import ZoneInfo
 import anthropic
 from pydantic import BaseModel, Field
 
-MODEL = "claude-opus-5-5"
+MODEL = "claude-sonnet-5-5"
 MAX_IMAGE_BYTES = 5 * 1024 * 1024  # Claude's per-image limit
 MAX_PDF_BYTES = 20 * 1024 * 1024
 
