@@ -78,7 +78,9 @@ Extract every dated event on the flyer, one entry per event. Guidelines:
 - An event with a date but no printed time is all-day. Use 24-hour times, and if only a start time is printed, leave the end time null.
 - Copy descriptions faithfully and keep fine print (age limits, "while supplies last", RSVP notes). Don't invent details.
 - Ignore content that isn't an event: social media handles, contact emails, general disclaimers, logos.
-- Flyers often omit the year. If weekdays are printed next to dates, use them to find the matching year; otherwise pick the year that puts the events closest to today's date. Either way, add a warning saying which year you assumed. Don't warn that events are in the past; the app already flags that.
+- Flyers often omit the year. If weekdays are printed next to dates, use them to find the matching year; otherwise pick 
+the year that puts the events closest to today's date. Either way, add a warning saying which year you assumed. 
+Don't warn that events are in the past; the app already flags that.
 - If the image isn't an event flyer or has no dated events, return an empty list with a warning explaining why."""
 
 
