@@ -1,10 +1,13 @@
 {% extends "base.html" %}
-{% block title %}Not found{% endblock %}
+{% from "_ui.html" import icon %}
+{% block title %}Page not found · The Neighborhood{% endblock %}
 {% block role %}{% endblock %}
 {% block nav %}{% endblock %}
+{% block container_class %}container-narrow{% endblock %}
 {% block content %}
-<div class="card narrow empty">
-  <h1>Page not found</h1>
-  <p class="muted">This link may be outdated. Ask your building manager for the latest link or QR code.</p>
+<div class="empty-state card not-found">
+  <div class="empty-icon">{{ icon("sprout") }}</div>
+  <h1>This page isn't here</h1>
+  <p>The link may be outdated or mistyped. Ask your building manager for the latest link or QR code.</p>
 </div>
 {% endblock %}

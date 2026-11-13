@@ -1,50 +1,118 @@
 {% extends "base.html" %}
+{% from "_ui.html" import icon, form_errors %}
+{% block title %}{{ "New event" if is_new else "Edit event" }} · {{ building.name }}{% endblock %}
+{% block container_class %}container-narrow{% endblock %}
 {% block content %}
-<p><a href="{{ url_for('building_detail', building_id=building.id) }}">← {{ building.name }}</a></p>
-<div class="card narrow">
-  <h1>{{ "New event" if is_new else "Edit event" }}</h1>
-  <form method="post" id="event-form">
-    <input type="hidden" name="csrf" value="{{ csrf_token }}">
-    <label>Title <input name="title" required value="{{ event.title }}" placeholder="Rooftop movie night"></label>
+{% set back_url = url_for('building_detail', building_id=building.id) %}
+<a class="back-link" href="{{ back_url }}">{{ icon("chevron-left") }}<span>{{ building.name }}</span></a>
 
-    <label class="check"><input type="checkbox" name="all_day" id="all_day" {{ "checked" if event.all_day }}> All-day event</label>
-
-    <div class="grid2">
-      <label>Start date <input type="date" name="start_date" id="start_date" required value="{{ event.start_local[:10] }}"></label>
-      <label class="timed">Start time <input type="time" name="start_time" value="{{ event.start_local[11:16] }}"></label>
-      <label>End date <input type="date" name="end_date" id="end_date" required value="{{ event.end_local[:10] }}"></label>
-      <label class="timed">End time <input type="time" name="end_time" value="{{ event.end_local[11:16] }}"></label>
-    </div>
-    <p class="muted small">Times are in {{ building.timezone }}.</p>
-
-    <label>Location <input name="location" value="{{ event.location or '' }}" placeholder="Rooftop lounge, 12th floor"></label>
-    <label>Description <textarea name="description" rows="5" placeholder="What to expect, what to bring…">{{ event.description or '' }}</textarea></label>
-    <label>Link <span class="muted">(optional: sign-up form, flyer, etc.)</span>
-      <input type="url" name="url" value="{{ event.url or '' }}" placeholder="https://">
-    </label>
-    <label>Organizer <span class="muted">(optional: name or email)</span>
-      <input name="organizer" value="{{ event.organizer or '' }}">
-    </label>
-    <button class="primary">{{ "Add event" if is_new else "Save changes" }}</button>
-  </form>
+<div class="page-header">
+  <div>
+    <h1>{{ "New event" if is_new else "Edit event" }}</h1>
+    <p class="page-subtitle">{{ "It'll appear on the attendee page as soon as you save." if is_new else "Changes show up on the attendee page right away." }}</p>
+  </div>
 </div>
+
+<form method="post" class="card form-card" id="event-form">
+  <input type="hidden" name="csrf" value="{{ csrf_token }}">
+  {{ form_errors(errors) }}
+
+  <div class="form-section">
+    <h2 class="form-section-title">Details</h2>
+    <div class="field">
+      <label for="title">Title <span class="req">*</span></label>
+      <input id="title" name="title" required value="{{ event.title }}" placeholder="Rooftop movie night" {{ "autofocus" if is_new }}>
+    </div>
+    <div class="field">
+      <label for="description">Description</label>
+      <textarea id="description" name="description" rows="4" placeholder="What to expect, what to bring…">{{ event.description or '' }}</textarea>
+    </div>
+  </div>
+
+  <div class="form-section">
+    <div class="form-section-head">
+      <h2 class="form-section-title">Date &amp; time</h2>
+      <label class="switch">
+        <input type="checkbox" name="all_day" id="all_day" {{ "checked" if event.all_day }}>
+        <span class="switch-track" aria-hidden="true"></span>
+        <span>All day</span>
+      </label>
+    </div>
+    <div class="grid-2">
+      <div class="field">
+        <label for="start_date">Start date <span class="req">*</span></label>
+        <input type="date" name="start_date" id="start_date" required value="{{ event.start_local[:10] }}">
+      </div>
+      <div class="field timed">
+        <label for="start_time">Start time</label>
+        <input type="time" name="start_time" id="start_time" value="{{ event.start_local[11:16] }}">
+      </div>
+      <div class="field">
+        <label for="end_date">End date <span class="req">*</span></label>
+        <input type="date" name="end_date" id="end_date" required value="{{ event.end_local[:10] }}">
+      </div>
+      <div class="field timed">
+        <label for="end_time">End time</label>
+        <input type="time" name="end_time" id="end_time" value="{{ event.end_local[11:16] }}">
+      </div>
+    </div>
+    <p class="hint">{{ icon("clock") }} Times are in {{ building.timezone | replace("_", " ") }}.</p>
+  </div>
+
+  <div class="form-section">
+    <h2 class="form-section-title">Location &amp; extras</h2>
+    <div class="field">
+      <label for="location">Location</label>
+      <input id="location" name="location" value="{{ event.location or '' }}" placeholder="Rooftop lounge, 12th floor">
+    </div>
+    <div class="grid-2">
+      <div class="field">
+        <label for="url">Link</label>
+        <input id="url" type="url" name="url" value="{{ event.url or '' }}" placeholder="https://">
+        <p class="hint">Sign-up form, flyer, etc.</p>
+      </div>
+      <div class="field">
+        <label for="organizer">Organizer</label>
+        <input id="organizer" name="organizer" value="{{ event.organizer or '' }}" placeholder="Name or email">
+      </div>
+    </div>
+  </div>
+
+  <div class="form-footer">
+    {% if not is_new %}
+      <button type="submit" form="delete-form" class="btn btn-ghost btn-ghost-danger form-footer-start">{{ icon("trash") }}<span>Delete</span></button>
+    {% endif %}
+    <a class="btn btn-secondary" href="{{ back_url }}">Cancel</a>
+    <button class="btn btn-primary">{{ "Add event" if is_new else "Save changes" }}</button>
+  </div>
+</form>
+
+{% if not is_new %}
+  <form method="post" id="delete-form" action="{{ url_for('event_delete', event_id=event_id) }}"
+        data-confirm="“{{ event.title }}” will be removed from the attendee page. This can't be undone."
+        data-confirm-title="Delete this event?" data-confirm-action="Delete event">
+    <input type="hidden" name="csrf" value="{{ csrf_token }}">
+  </form>
+{% endif %}
 {% endblock %}
 {% block scripts %}
 <script>
-  const allDay = document.getElementById("all_day");
-  const startDate = document.getElementById("start_date");
-  const endDate = document.getElementById("end_date");
-  function syncAllDay() {
-    document.querySelectorAll(".timed").forEach((el) => {
-      el.hidden = allDay.checked;
-      el.querySelector("input").required = !allDay.checked;
+  (function () {
+    const allDay = document.getElementById("all_day");
+    const startDate = document.getElementById("start_date");
+    const endDate = document.getElementById("end_date");
+    function syncAllDay() {
+      document.querySelectorAll(".timed").forEach((el) => {
+        el.hidden = allDay.checked;
+        el.querySelector("input").required = !allDay.checked;
+      });
+    }
+    allDay.addEventListener("change", syncAllDay);
+    // Keep the end date from landing before the start date.
+    startDate.addEventListener("change", () => {
+      if (!endDate.value || endDate.value < startDate.value) endDate.value = startDate.value;
     });
-  }
-  allDay.addEventListener("change", syncAllDay);
-  // Keep the end date from landing before the start date.
-  startDate.addEventListener("change", () => {
-    if (!endDate.value || endDate.value < startDate.value) endDate.value = startDate.value;
-  });
-  syncAllDay();
+    syncAllDay();
+  })();
 </script>
 {% endblock %}

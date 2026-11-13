@@ -35,9 +35,9 @@ def public_events(request: Request, con: DB, token: str):
     tz = building["timezone"]
     events = [e for e in db.list_events(con, building["id"]) if ics.is_upcoming(e, tz)]
     cards = [dict(e, google_url=ics.google_link(e, tz)) for e in events]
-    days = [(day, list(items)) for day, items in groupby(cards, key=lambda e: e["start_local"][:10])]
+    months = [(month, list(items)) for month, items in groupby(cards, key=lambda e: e["start_local"][:7])]
     feed_url = f"{public_base(request)}/b/{token}/feed.ics"
-    return render(request, "public.html", building=building, days=days, count=len(cards), tz=tz_label(tz),
+    return render(request, "public.html", building=building, months=months, count=len(cards), tz=tz_label(tz),
                   feed_url=feed_url, webcal_url=re.sub(r"^https?://", "webcal://", feed_url))
 
 

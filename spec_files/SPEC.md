@@ -168,8 +168,9 @@ app/
   routes/auth.py    # signup / login / logout
   routes/host.py    # host dashboard (buildings, events, QR)
   routes/public.py  # attendee page + .ics endpoints
-  templates/        # Jinja templates
-  static/style.css
+  templates/        # Jinja templates (_ui.html holds shared macros: icons, date tiles, form errors)
+  static/style.css  # forest & sage design system, light + dark
+  static/app.js     # toasts, copy buttons, confirm dialog
   static/public.js  # select-all / export logic
   requirements.txt  # fastapi, uvicorn, jinja2, python-multipart, itsdangerous, segno
   README.md

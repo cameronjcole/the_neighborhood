@@ -1,69 +1,120 @@
 {% extends "base.html" %}
+{% from "_ui.html" import icon, event_when, date_tile %}
 {% block title %}{{ building.name }} · Events{% endblock %}
+{% block body_class %}public-page{% endblock %}
 {% block role %}{% endblock %}
 {% block nav %}{% endblock %}
+
+{% block hero %}
+<section class="hero">
+  <div class="hero-inner">
+    <span class="eyebrow">{{ icon("leaf") }} Community events</span>
+    <h1>{{ building.name }}</h1>
+    {% if building.address %}<p class="hero-address">{{ icon("map-pin") }}<span>{{ building.address }}</span></p>{% endif %}
+    <div class="hero-chips">
+      <span class="chip">{{ icon("calendar") }}{{ count }} upcoming event{{ "" if count == 1 else "s" }}</span>
+      <span class="chip">{{ icon("clock") }}Times in {{ tz }}</span>
+    </div>
+  </div>
+</section>
+{% endblock %}
+
 {% block content %}
-<div class="public-head">
-  <h1>{{ building.name }}</h1>
-  {% if building.address %}<div class="muted">{{ building.address }}</div>{% endif %}
-  <div class="muted small">All times {{ tz }} ({{ building.timezone }})</div>
-</div>
+{% if count %}
+  <div class="list-toolbar">
+    <label class="checkbox">
+      <input type="checkbox" id="select-all">
+      <span class="checkbox-box">{{ icon("check") }}</span>
+      <span>Select all</span>
+    </label>
+    <span class="muted small" id="toolbar-hint">Tap events to choose which ones to add.</span>
+  </div>
+
+  <div class="alert alert-info" id="google-hint" hidden>
+    {{ icon("info") }}
+    <div>
+      <strong>Your .ics file is downloading.</strong>
+      To add these events to Google Calendar, open
+      <a href="https://calendar.google.com/calendar/r/settings/export" target="_blank" rel="noopener">Settings → Import &amp; export</a>
+      and choose the file.
+    </div>
+  </div>
+
+  {% for month, events in months %}
+    <h2 class="month-heading">{{ month | month_year }}</h2>
+    <div class="event-cards">
+      {% for e in events %}
+        <article class="event-card" data-google="{{ e.google_url }}">
+          <label class="checkbox event-card-check">
+            <input type="checkbox" class="pick" value="{{ e.id }}" aria-label="Select {{ e.title }}">
+            <span class="checkbox-box">{{ icon("check") }}</span>
+          </label>
+          {{ date_tile(e) }}
+          <div class="event-card-body">
+            <h3 class="event-card-title">{{ e.title }}</h3>
+            <div class="meta-stack">
+              <span class="meta-line">{{ icon("clock") }}<span>{{ e.start_local | weekday }} · {{ event_when(e) }}</span></span>
+              {% if e.location %}<span class="meta-line">{{ icon("map-pin") }}<span>{{ e.location }}</span></span>{% endif %}
+              {% if e.organizer %}<span class="meta-line">{{ icon("user") }}<span>Hosted by {{ e.organizer }}</span></span>{% endif %}
+            </div>
+            {% if e.description %}<p class="event-card-desc">{{ e.description }}</p>{% endif %}
+            <div class="event-card-actions">
+              {% if e.url %}<a class="btn btn-sm btn-soft" href="{{ e.url }}" target="_blank" rel="noopener">{{ icon("external") }}<span>Details &amp; sign-up</span></a>{% endif %}
+              <a class="btn btn-sm btn-secondary" href="{{ url_for('public_ics', token=building.share_token) }}?ids={{ e.id }}">{{ icon("calendar-plus") }}<span>Apple / Outlook</span></a>
+              <a class="btn btn-sm btn-secondary" href="{{ e.google_url }}" target="_blank" rel="noopener">{{ icon("calendar-plus") }}<span>Google</span></a>
+            </div>
+          </div>
+        </article>
+      {% endfor %}
+    </div>
+  {% endfor %}
+{% else %}
+  <div class="empty-state card">
+    <div class="empty-icon">{{ icon("sprout") }}</div>
+    <h2>No upcoming events yet</h2>
+    <p>Check back soon, or subscribe below to get new events automatically.</p>
+  </div>
+{% endif %}
+
+<section class="card subscribe-card">
+  <span class="icon-tile">{{ icon("rss") }}</span>
+  <div class="subscribe-body">
+    <h2>Stay in sync</h2>
+    <p class="muted">Subscribe once and new events from {{ building.name }} appear in your calendar automatically.</p>
+    <div class="subscribe-actions">
+      <a class="btn btn-secondary" href="{{ webcal_url }}">{{ icon("calendar") }}<span>Subscribe in Apple / Outlook</span></a>
+      <button type="button" class="btn btn-secondary" data-copy="{{ feed_url }}" data-copy-message="Feed URL copied. In Google Calendar, choose Other calendars → From URL.">{{ icon("link") }}<span>Copy URL for Google</span></button>
+    </div>
+  </div>
+</section>
+
+<p class="page-footnote">{{ icon("leaf") }} Shared with The Neighborhood</p>
 
 {% if count %}
-  <div class="toolbar" id="toolbar">
-    <label class="check"><input type="checkbox" id="select-all"> Select all</label>
-    <span class="muted" id="selected-count">0 selected</span>
-    <div class="menu-wrap">
-      <button class="primary" id="add-selected" disabled>Add selected to calendar ▾</button>
-      <div class="menu" id="add-menu" hidden>
-        <button type="button" data-target="ics">Apple Calendar / Outlook (.ics)</button>
-        <button type="button" data-target="google">Google Calendar</button>
+  <div class="selection-bar" id="selection-bar" aria-hidden="true">
+    <div class="selection-bar-inner">
+      <div class="selection-count"><strong id="selected-count">0</strong> selected</div>
+      <button type="button" class="btn btn-ghost btn-sm selection-clear" id="clear-selection">Clear</button>
+      <div class="menu-wrap">
+        <button type="button" class="btn btn-primary" id="add-selected" aria-haspopup="menu" aria-expanded="false">
+          {{ icon("calendar-plus") }}<span>Add to calendar</span>{{ icon("chevron-down") }}
+        </button>
+        <div class="menu" id="add-menu" role="menu" hidden>
+          <button type="button" role="menuitem" data-target="ics">
+            {{ icon("download") }}
+            <span><strong>Apple Calendar / Outlook</strong><small>Download one .ics file</small></span>
+          </button>
+          <button type="button" role="menuitem" data-target="google">
+            {{ icon("calendar-plus") }}
+            <span><strong>Google Calendar</strong><small id="google-sub">Opens Google with the event</small></span>
+          </button>
+        </div>
       </div>
     </div>
   </div>
-  <div class="flash" id="google-hint" hidden>
-    Downloaded an .ics file with your events. To add them all to Google Calendar, open
-    <a href="https://calendar.google.com/calendar/r/settings/export" target="_blank" rel="noopener">Google Calendar → Settings → Import</a>
-    and choose that file.
-  </div>
-
-  {% for day, events in days %}
-    <h2 class="day">{{ (day ~ "T00:00") | pretty_date }}</h2>
-    {% for e in events %}
-      <article class="card event" data-id="{{ e.id }}" data-google="{{ e.google_url }}">
-        <label class="check event-check"><input type="checkbox" class="pick" value="{{ e.id }}" aria-label="Select {{ e.title }}"></label>
-        <div class="event-body">
-          <h3>{{ e.title }}</h3>
-          <div class="meta">
-            {% if e.all_day %}All day{% if e.end_local[:10] != e.start_local[:10] %} · through {{ e.end_local | pretty_date }}{% endif %}
-            {% else %}{{ e.start_local | pretty_time }} – {{ e.end_local | pretty_time }}{% if e.end_local[:10] != e.start_local[:10] %} ({{ e.end_local | pretty_date }}){% endif %}{% endif %}
-          </div>
-          {% if e.location %}<div class="meta">📍 {{ e.location }}</div>{% endif %}
-          {% if e.organizer %}<div class="meta">Hosted by {{ e.organizer }}</div>{% endif %}
-          {% if e.description %}<p class="desc">{{ e.description }}</p>{% endif %}
-          {% if e.url %}<p><a href="{{ e.url }}" target="_blank" rel="noopener">More info / sign up ↗</a></p>{% endif %}
-          <div class="button-row">
-            <a class="button small" href="{{ url_for('public_ics', token=building.share_token) }}?ids={{ e.id }}">Apple / .ics</a>
-            <a class="button small" href="{{ e.google_url }}" target="_blank" rel="noopener">Google</a>
-          </div>
-        </div>
-      </article>
-    {% endfor %}
-  {% endfor %}
-{% else %}
-  <div class="card empty">No upcoming events. Check back soon!</div>
 {% endif %}
-
-<footer class="subscribe card">
-  <strong>Stay in sync</strong>
-  <p class="muted small">Subscribe to get new events automatically as they're posted.</p>
-  <div class="button-row">
-    <a class="button small" href="{{ webcal_url }}">Subscribe (Apple / Outlook)</a>
-    <button type="button" class="button small" id="copy-feed" data-url="{{ feed_url }}">Copy feed URL for Google</button>
-  </div>
-  <p class="muted small">Google: Settings → Add calendar → From URL → paste.</p>
-</footer>
 {% endblock %}
+
 {% block scripts %}
 <script>window.ICS_URL = "{{ url_for('public_ics', token=building.share_token) }}";</script>
 <script src="{{ url_for('static', path='public.js') }}"></script>

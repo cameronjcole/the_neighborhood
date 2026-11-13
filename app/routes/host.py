@@ -42,7 +42,11 @@ def redirect_to_building(request: Request, building_id: int):
 
 @router.get("/dashboard")
 def dashboard(request: Request, con: DB, user_id: UserId):
-    return render(request, "dashboard.html", buildings=db.list_buildings(con, user_id))
+    cards = []
+    for b in db.list_buildings(con, user_id):
+        upcoming = [e for e in db.list_events(con, b["id"]) if ics.is_upcoming(e, b["timezone"])]
+        cards.append(dict(b, upcoming_count=len(upcoming), next_event=upcoming[0] if upcoming else None))
+    return render(request, "dashboard.html", buildings=cards)
 
 
 @router.get("/buildings/new")
@@ -54,9 +58,8 @@ def building_new_page(request: Request, user_id: UserId):
 @router.post("/buildings/new")
 def building_new(request: Request, con: DB, user_id: UserId, form: Annotated[BuildingForm, Form()]):
     if errors := form.errors():
-        for e in errors:
-            flash(request, e)
-        return render(request, "building_form.html", building=form.cleaned(), timezones=TIMEZONES, is_new=True)
+        return render(request, "building_form.html", errors=errors, building=form.cleaned(), timezones=TIMEZONES,
+                      is_new=True)
     data = form.cleaned()
     building_id = db.create_building(con, user_id, data["name"], data["address"], data["timezone"])
     return redirect_to_building(request, building_id)
@@ -74,9 +77,7 @@ def building_edit(request: Request, con: DB, user_id: UserId, building_id: int,
                   form: Annotated[BuildingForm, Form()]):
     owned_building(con, building_id, user_id)
     if errors := form.errors():
-        for e in errors:
-            flash(request, e)
-        return render(request, "building_form.html", building=form.cleaned(), timezones=TIMEZONES,
+        return render(request, "building_form.html", errors=errors, building=form.cleaned(), timezones=TIMEZONES,
                       is_new=False, building_id=building_id)
     data = form.cleaned()
     db.update_building(con, building_id, data["name"], data["address"], data["timezone"])
@@ -139,9 +140,7 @@ def event_new(request: Request, con: DB, user_id: UserId, building_id: int, form
     building = owned_building(con, building_id, user_id)
     data = form.cleaned()
     if errors := form.errors():
-        for e in errors:
-            flash(request, e)
-        return render(request, "event_form.html", building=building, event=data, is_new=True)
+        return render(request, "event_form.html", errors=errors, building=building, event=data, is_new=True)
     db.create_event(con, building_id, data)
     flash(request, f"Added “{data['title']}”.")
     return redirect_to_building(request, building_id)
@@ -151,7 +150,7 @@ def event_new(request: Request, con: DB, user_id: UserId, building_id: int, form
 def event_edit_page(request: Request, con: DB, user_id: UserId, event_id: int):
     event = owned_event(con, event_id, user_id)
     building = owned_building(con, event["building_id"], user_id)
-    return render(request, "event_form.html", building=building, event=event, is_new=False)
+    return render(request, "event_form.html", building=building, event=event, is_new=False, event_id=event_id)
 
 
 @router.post("/events/{event_id}/edit")
@@ -160,9 +159,8 @@ def event_edit(request: Request, con: DB, user_id: UserId, event_id: int, form: 
     building = owned_building(con, event["building_id"], user_id)
     data = form.cleaned()
     if errors := form.errors():
-        for e in errors:
-            flash(request, e)
-        return render(request, "event_form.html", building=building, event=data, is_new=False)
+        return render(request, "event_form.html", errors=errors, building=building, event=data, is_new=False,
+                      event_id=event_id)
     db.update_event(con, event_id, data)
     flash(request, f"Saved “{data['title']}”.")
     return redirect_to_building(request, building["id"])

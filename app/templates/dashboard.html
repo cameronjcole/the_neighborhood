@@ -1,19 +1,50 @@
 {% extends "base.html" %}
+{% from "_ui.html" import icon %}
+{% block title %}Your buildings · The Neighborhood{% endblock %}
 {% block content %}
-<div class="row-between">
-  <h1>Your buildings</h1>
-  <a class="button primary" href="{{ url_for('building_new') }}">+ New building</a>
+<div class="page-header">
+  <div>
+    <h1>Your buildings</h1>
+    <p class="page-subtitle">Manage events and share them with your attendees.</p>
+  </div>
+  {% if buildings %}
+    <div class="page-actions">
+      <a class="btn btn-primary" href="{{ url_for('building_new') }}">{{ icon("plus") }}<span>New building</span></a>
+    </div>
+  {% endif %}
 </div>
+
 {% if buildings %}
-  <ul class="list">
+  <div class="building-grid">
     {% for b in buildings %}
-      <li class="card">
-        <a class="title" href="{{ url_for('building_detail', building_id=b.id) }}">{{ b.name }}</a>
-        <div class="muted">{{ b.address or "No address" }} · {{ b.event_count }} event{{ "" if b.event_count == 1 else "s" }}</div>
-      </li>
+      <a class="building-card" href="{{ url_for('building_detail', building_id=b.id) }}">
+        <div class="building-card-top">
+          <span class="icon-tile">{{ icon("building") }}</span>
+          {{ icon("chevron-right", "building-card-chevron") }}
+        </div>
+        <h2 class="building-card-title">{{ b.name }}</h2>
+        <p class="meta-line">{{ icon("map-pin") }}<span>{{ b.address or "No address set" }}</span></p>
+        <div class="building-card-foot">
+          <span class="stat"><strong>{{ b.upcoming_count }}</strong> upcoming</span>
+          {% if b.next_event %}
+            <span class="next-up">Next: {{ b.next_event.title }} · {{ b.next_event.start_local | month_abbr }} {{ b.next_event.start_local | day_num }}</span>
+          {% else %}
+            <span class="next-up">Nothing scheduled yet</span>
+          {% endif %}
+        </div>
+      </a>
     {% endfor %}
-  </ul>
+    <a class="building-card building-card-add" href="{{ url_for('building_new') }}">
+      <span class="icon-tile icon-tile-ghost">{{ icon("plus") }}</span>
+      <span>Add another building</span>
+    </a>
+  </div>
 {% else %}
-  <div class="card empty">You haven't added a building yet. Add one to start posting events.</div>
+  <div class="empty-state card">
+    <div class="empty-icon">{{ icon("sprout") }}</div>
+    <h2>Add your first building</h2>
+    <p>Each building gets its own event list, share link, and QR code for attendees.</p>
+    <a class="btn btn-primary" href="{{ url_for('building_new') }}">{{ icon("plus") }}<span>New building</span></a>
+  </div>
 {% endif %}
 {% endblock %}

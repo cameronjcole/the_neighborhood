@@ -17,6 +17,10 @@ BASE_DIR = os.path.dirname(__file__)
 templates = Jinja2Templates(directory=os.path.join(BASE_DIR, "templates"))
 templates.env.filters["pretty_date"] = lambda v: datetime.fromisoformat(v).strftime("%a, %b %-d, %Y")
 templates.env.filters["pretty_time"] = lambda v: datetime.fromisoformat(v).strftime("%-I:%M %p")
+templates.env.filters["month_abbr"] = lambda v: datetime.fromisoformat(v).strftime("%b")
+templates.env.filters["day_num"] = lambda v: datetime.fromisoformat(v).strftime("%-d")
+templates.env.filters["month_year"] = lambda v: datetime.fromisoformat(f"{v}-01").strftime("%B %Y")
+templates.env.filters["weekday"] = lambda v: datetime.fromisoformat(v).strftime("%A")
 
 
 # --- database ---
@@ -48,8 +52,9 @@ def check_password(stored: str, password: str) -> bool:
 
 # --- sessions, flash, CSRF ---
 
-def flash(request: Request, message: str):
-    request.session.setdefault("_flashes", []).append(message)
+def flash(request: Request, message: str, category: str = "success"):
+    """Queue a toast for the next rendered page. category: "success" or "error"."""
+    request.session.setdefault("_flashes", []).append([category, message])
 
 
 def csrf_token(request: Request) -> str:
@@ -67,6 +72,7 @@ async def verify_csrf(request: Request):
 
 
 def render(request: Request, name: str, **context):
+    context.setdefault("errors", [])
     context |= {
         "csrf_token": csrf_token(request),
         "logged_in": "user_id" in request.session,

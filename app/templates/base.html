@@ -1,27 +1,66 @@
+{% from "_ui.html" import icon %}
 <!doctype html>
 <html lang="en">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#2f6b4f">
   <title>{% block title %}The Neighborhood{% endblock %}</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%232f6b4f' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10Z'/%3E%3Cpath d='M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12'/%3E%3C/svg%3E">
   <link rel="stylesheet" href="{{ url_for('static', path='style.css') }}">
 </head>
-<body>
+<body class="{% block body_class %}{% endblock %}">
+  {% block header %}
   <header class="topbar">
-    <a class="brand" href="{{ url_for('index') }}">The Neighborhood</a>{% block role %}<span class="role">Host</span>{% endblock %}
-    {% block nav %}
-      {% if logged_in %}
-        <form method="post" action="{{ url_for('logout') }}" class="inline">
-          <input type="hidden" name="csrf" value="{{ csrf_token }}">
-          <button class="link">Log out</button>
-        </form>
-      {% endif %}
-    {% endblock %}
+    <div class="topbar-inner">
+      <a class="brand" href="{{ url_for('index') }}">
+        <span class="brand-mark">{{ icon("leaf") }}</span>
+        <span class="brand-name">The Neighborhood</span>
+      </a>
+      {% block role %}<span class="role-pill">Host</span>{% endblock %}
+      <div class="topbar-actions">
+        {% block nav %}
+          {% if logged_in %}
+            <form method="post" action="{{ url_for('logout') }}">
+              <input type="hidden" name="csrf" value="{{ csrf_token }}">
+              <button class="btn btn-ghost btn-sm">{{ icon("log-out") }}<span>Log out</span></button>
+            </form>
+          {% endif %}
+        {% endblock %}
+      </div>
+    </div>
   </header>
-  <main class="container">
-    {% for m in messages %}<div class="flash">{{ m }}</div>{% endfor %}
+  {% endblock %}
+
+  {% block hero %}{% endblock %}
+
+  <main class="container {% block container_class %}{% endblock %}">
     {% block content %}{% endblock %}
   </main>
+
+  <div class="toasts" aria-live="polite">
+    {% for category, message in messages %}
+      <div class="toast toast-{{ category }}" role="status">
+        {{ icon("check" if category == "success" else "alert") }}
+        <span>{{ message }}</span>
+        <button type="button" class="toast-close" aria-label="Dismiss">{{ icon("x") }}</button>
+      </div>
+    {% endfor %}
+  </div>
+
+  <dialog class="dialog" id="confirm-dialog">
+    <form method="dialog">
+      <div class="dialog-icon">{{ icon("alert") }}</div>
+      <h2 class="dialog-title" id="confirm-title">Are you sure?</h2>
+      <p class="dialog-body" id="confirm-body"></p>
+      <div class="dialog-actions">
+        <button class="btn btn-secondary" value="cancel">Cancel</button>
+        <button class="btn btn-danger" value="ok" id="confirm-ok">Confirm</button>
+      </div>
+    </form>
+  </dialog>
+
+  <script src="{{ url_for('static', path='app.js') }}"></script>
   {% block scripts %}{% endblock %}
 </body>
 </html>

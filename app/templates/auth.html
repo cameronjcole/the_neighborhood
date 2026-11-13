@@ -1,17 +1,59 @@
 {% extends "base.html" %}
-{% block title %}{{ "Sign up" if mode == "signup" else "Log in" }} · The Neighborhood{% endblock %}
+{% from "_ui.html" import icon, form_errors %}
+{% block title %}{{ "Create account" if mode == "signup" else "Log in" }} · The Neighborhood{% endblock %}
+{% block body_class %}auth-page{% endblock %}
+{% block header %}{% endblock %}
+{% block container_class %}auth-container{% endblock %}
 {% block content %}
-<div class="card narrow">
-  <h1>{{ "Create a host account" if mode == "signup" else "Host log in" }}</h1>
-  <form method="post">
-    <input type="hidden" name="csrf" value="{{ csrf_token }}">
-    <label>Email <input type="email" name="email" required autofocus value="{{ email }}"></label>
-    <label>Password <input type="password" name="password" required minlength="{{ 8 if mode == 'signup' else 1 }}"></label>
-    <button class="primary">{{ "Sign up" if mode == "signup" else "Log in" }}</button>
-  </form>
-  <p class="muted">
-    {% if mode == "signup" %}Already have an account? <a href="{{ url_for('login') }}">Log in</a>
-    {% else %}New here? <a href="{{ url_for('signup') }}">Create an account</a>{% endif %}
-  </p>
+<div class="auth-shell">
+  <aside class="auth-aside">
+    <a class="brand brand-light" href="{{ url_for('index') }}">
+      <span class="brand-mark">{{ icon("leaf") }}</span>
+      <span class="brand-name">The Neighborhood</span>
+    </a>
+    <div class="auth-aside-copy">
+      <h2>Bring your building together.</h2>
+      <p>Post community events once, share a single link or QR code, and let attendees add everything to their calendar in a tap.</p>
+      <ul class="auth-points">
+        <li>{{ icon("calendar") }} Plan a week or a month of events</li>
+        <li>{{ icon("qr") }} Print a QR code for the lobby</li>
+        <li>{{ icon("calendar-plus") }} Works with Apple &amp; Google Calendar</li>
+      </ul>
+    </div>
+  </aside>
+
+  <section class="auth-main">
+    <div class="auth-card">
+      <a class="brand auth-mobile-brand" href="{{ url_for('index') }}">
+        <span class="brand-mark">{{ icon("leaf") }}</span>
+        <span class="brand-name">The Neighborhood</span>
+      </a>
+      <h1>{{ "Create your host account" if mode == "signup" else "Welcome back" }}</h1>
+      <p class="muted">{{ "Start sharing events with your building in minutes." if mode == "signup" else "Log in to manage your buildings and events." }}</p>
+
+      {{ form_errors(errors) }}
+
+      <form method="post" class="stack">
+        <input type="hidden" name="csrf" value="{{ csrf_token }}">
+        <div class="field">
+          <label for="email">Email</label>
+          <input id="email" type="email" name="email" required autofocus autocomplete="email" value="{{ email }}" placeholder="you@example.com">
+        </div>
+        <div class="field">
+          <label for="password">Password</label>
+          <input id="password" type="password" name="password" required
+                 autocomplete="{{ 'new-password' if mode == 'signup' else 'current-password' }}"
+                 minlength="{{ 8 if mode == 'signup' else 1 }}"
+                 placeholder="{{ 'At least 8 characters' if mode == 'signup' else '' }}">
+        </div>
+        <button class="btn btn-primary btn-lg btn-block">{{ "Create account" if mode == "signup" else "Log in" }}</button>
+      </form>
+
+      <p class="auth-switch muted">
+        {% if mode == "signup" %}Already have an account? <a href="{{ url_for('login') }}">Log in</a>
+        {% else %}New to The Neighborhood? <a href="{{ url_for('signup') }}">Create an account</a>{% endif %}
+      </p>
+    </div>
+  </section>
 </div>
 {% endblock %}

@@ -1,20 +1,44 @@
 {% extends "base.html" %}
+{% from "_ui.html" import icon, form_errors %}
+{% block title %}{{ "New building" if is_new else "Edit building" }} · The Neighborhood{% endblock %}
+{% block container_class %}container-narrow{% endblock %}
 {% block content %}
-<p><a href="{{ url_for('dashboard') if is_new else url_for('building_detail', building_id=building_id) }}">← Back</a></p>
-<div class="card narrow">
-  <h1>{{ "New building" if is_new else "Edit building" }}</h1>
-  <form method="post">
-    <input type="hidden" name="csrf" value="{{ csrf_token }}">
-    <label>Name <input name="name" required value="{{ building.name }}" placeholder="The Maple Apartments"></label>
-    <label>Address <span class="muted">(used as the default event location)</span>
-      <input name="address" value="{{ building.address or '' }}" placeholder="123 Main St, Springfield">
-    </label>
-    <label>Timezone
-      <select name="timezone">
+{% set back_url = url_for('dashboard') if is_new else url_for('building_detail', building_id=building_id) %}
+<a class="back-link" href="{{ back_url }}">{{ icon("chevron-left") }}<span>{{ "Your buildings" if is_new else building.name }}</span></a>
+
+<div class="page-header">
+  <div>
+    <h1>{{ "New building" if is_new else "Edit building" }}</h1>
+    <p class="page-subtitle">{{ "Set up a building to start posting events." if is_new else "Update this building's details." }}</p>
+  </div>
+</div>
+
+<form method="post" class="card form-card">
+  <input type="hidden" name="csrf" value="{{ csrf_token }}">
+  {{ form_errors(errors) }}
+
+  <div class="form-section">
+    <div class="field">
+      <label for="name">Building name <span class="req">*</span></label>
+      <input id="name" name="name" required value="{{ building.name }}" placeholder="The Maple Apartments" autofocus>
+    </div>
+    <div class="field">
+      <label for="address">Address</label>
+      <input id="address" name="address" value="{{ building.address or '' }}" placeholder="123 Main St, Springfield">
+      <p class="hint">Used as the default location for new events.</p>
+    </div>
+    <div class="field">
+      <label for="timezone">Timezone</label>
+      <select id="timezone" name="timezone">
         {% for tz in timezones %}<option {{ "selected" if tz == building.timezone }}>{{ tz }}</option>{% endfor %}
       </select>
-    </label>
-    <button class="primary">{{ "Create building" if is_new else "Save" }}</button>
-  </form>
-</div>
+      <p class="hint">Event times are entered and shown in this timezone.</p>
+    </div>
+  </div>
+
+  <div class="form-footer">
+    <a class="btn btn-secondary" href="{{ back_url }}">Cancel</a>
+    <button class="btn btn-primary">{{ "Create building" if is_new else "Save changes" }}</button>
+  </div>
+</form>
 {% endblock %}

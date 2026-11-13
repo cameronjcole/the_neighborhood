@@ -6,7 +6,7 @@ from fastapi.responses import RedirectResponse
 
 import db
 from forms import CredentialsForm
-from web import DB, check_password, flash, hash_password, render, verify_csrf
+from web import DB, check_password, hash_password, render, verify_csrf
 
 router = APIRouter(dependencies=[Depends(verify_csrf)])
 
@@ -31,9 +31,7 @@ def signup(request: Request, con: DB, form: Annotated[CredentialsForm, Form()]):
             return RedirectResponse(request.url_for("dashboard"), status_code=303)
         except sqlite3.IntegrityError:
             errors = ["An account with that email already exists."]
-    for e in errors:
-        flash(request, e)
-    return render(request, "auth.html", mode="signup", email=form.email)
+    return render(request, "auth.html", errors=errors, mode="signup", email=form.email)
 
 
 @router.get("/login")
@@ -48,8 +46,7 @@ def login(request: Request, con: DB, form: Annotated[CredentialsForm, Form()], n
         request.session["user_id"] = user["id"]
         safe_next = next if next.startswith("/") and not next.startswith("//") else None
         return RedirectResponse(safe_next or request.url_for("dashboard"), status_code=303)
-    flash(request, "Incorrect email or password.")
-    return render(request, "auth.html", mode="login", email=form.email)
+    return render(request, "auth.html", errors=["Incorrect email or password."], mode="login", email=form.email)
 
 
 @router.post("/logout")
