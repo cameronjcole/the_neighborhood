@@ -8,7 +8,7 @@ from starlette.exceptions import HTTPException as StarletteHTTPException
 from starlette.middleware.sessions import SessionMiddleware
 
 import db
-from routes import auth, host, public
+from routes import auth, flyer, host, public
 from web import BASE_DIR, LoginRequired, render
 
 
@@ -24,6 +24,7 @@ app.add_middleware(SessionMiddleware, secret_key=os.environ.get("SECRET_KEY", "d
 app.mount("/static", StaticFiles(directory=os.path.join(BASE_DIR, "static")), name="static")
 app.include_router(auth.router)
 app.include_router(host.router)
+app.include_router(flyer.router)
 app.include_router(public.router)
 
 

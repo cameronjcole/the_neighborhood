@@ -1,0 +1,139 @@
+{% extends "base.html" %}
+{% from "_ui.html" import icon, form_errors %}
+{% block title %}Review flyer events · {{ building.name }}{% endblock %}
+{% block content %}
+{% set back_url = url_for('building_detail', building_id=building.id) %}
+<a class="back-link" href="{{ url_for('flyer_upload_page', building_id=building.id) }}">{{ icon("chevron-left") }}<span>Upload a different flyer</span></a>
+
+<div class="page-header">
+  <div>
+    <h1>Review events</h1>
+    <p class="page-subtitle">We found {{ rows | length }} event{{ "" if rows | length == 1 else "s" }}. Check the details, untick anything you don't want, then add them to {{ building.name }}.</p>
+  </div>
+</div>
+
+{% if warnings %}
+  <div class="alert alert-info">
+    {{ icon("info") }}
+    <div>
+      <strong>Worth a second look:</strong>
+      <ul>{% for w in warnings %}<li>{{ w }}</li>{% endfor %}</ul>
+    </div>
+  </div>
+{% endif %}
+{{ form_errors(errors) }}
+
+<div class="review-layout{{ ' has-preview' if preview }}">
+  {% if preview %}
+    <aside class="review-preview">
+      <div class="card review-preview-card">
+        <img src="{{ preview }}" alt="Uploaded flyer">
+      </div>
+    </aside>
+  {% endif %}
+
+  <form method="post" action="{{ url_for('flyer_confirm', building_id=building.id) }}" id="review-form" class="review-main">
+    <input type="hidden" name="csrf" value="{{ csrf_token }}">
+    <input type="hidden" name="count" value="{{ rows | length }}">
+
+    {% for row in rows %}
+      {% set p = "events-" ~ loop.index0 ~ "-" %}
+      {% set is_past = (row.end_date or row.start_date) < today %}
+      <section class="card review-row{{ ' is-excluded' if not row.include }}" data-row>
+        <div class="review-row-head">
+          <label class="checkbox" title="Include this event">
+            <input type="checkbox" name="{{ p }}include" class="row-include" {{ "checked" if row.include }}>
+            <span class="checkbox-box">{{ icon("check") }}</span>
+          </label>
+          <input class="review-title" name="{{ p }}title" value="{{ row.title }}" aria-label="Event title" placeholder="Event title">
+          {% if is_past %}<span class="tag tag-warn" title="This date has already passed">In the past</span>{% endif %}
+        </div>
+
+        {% if row.errors %}
+          <div class="alert alert-error review-row-alert">{{ icon("alert") }}<div>{{ row.errors | join(" ") }}</div></div>
+        {% endif %}
+
+        <div class="review-row-body">
+          <div class="review-when">
+            <div class="field">
+              <label for="{{ p }}start_date">Start date</label>
+              <input type="date" id="{{ p }}start_date" name="{{ p }}start_date" value="{{ row.start_date }}">
+            </div>
+            <div class="field timed">
+              <label for="{{ p }}start_time">Start time</label>
+              <input type="time" id="{{ p }}start_time" name="{{ p }}start_time" value="{{ row.start_time }}">
+            </div>
+            <div class="field">
+              <label for="{{ p }}end_date">End date</label>
+              <input type="date" id="{{ p }}end_date" name="{{ p }}end_date" value="{{ row.end_date }}">
+            </div>
+            <div class="field timed">
+              <label for="{{ p }}end_time">End time</label>
+              <input type="time" id="{{ p }}end_time" name="{{ p }}end_time" value="{{ row.end_time }}">
+            </div>
+          </div>
+          <div class="review-row-meta">
+            <label class="switch">
+              <input type="checkbox" name="{{ p }}all_day" class="row-all-day" {{ "checked" if row.all_day }}>
+              <span class="switch-track" aria-hidden="true"></span>
+              <span>All day</span>
+            </label>
+            {% if row.end_estimated %}<span class="hint timed">{{ icon("info") }} The flyer didn't list an end time, so we set one hour.</span>{% endif %}
+          </div>
+          <div class="field">
+            <label for="{{ p }}location">Location</label>
+            <input id="{{ p }}location" name="{{ p }}location" value="{{ row.location }}" placeholder="{{ building.address or 'Where is it?' }}">
+          </div>
+          <div class="field">
+            <label for="{{ p }}description">Description</label>
+            <textarea id="{{ p }}description" name="{{ p }}description" rows="1" class="autosize">{{ row.description }}</textarea>
+          </div>
+        </div>
+      </section>
+    {% endfor %}
+
+    <div class="review-footer">
+      <span class="muted" id="review-count"></span>
+      <a class="btn btn-secondary" href="{{ back_url }}">Cancel</a>
+      <button class="btn btn-primary" id="review-submit">{{ icon("plus") }}<span>Add events</span></button>
+    </div>
+  </form>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+  (function () {
+    const rows = Array.from(document.querySelectorAll("[data-row]"));
+    const countEl = document.getElementById("review-count");
+    const submit = document.getElementById("review-submit");
+
+    function syncRow(row) {
+      const allDay = row.querySelector(".row-all-day").checked;
+      row.querySelectorAll(".timed").forEach((el) => (el.hidden = allDay));
+      row.classList.toggle("is-excluded", !row.querySelector(".row-include").checked);
+    }
+
+    function syncCount() {
+      const n = rows.filter((r) => r.querySelector(".row-include").checked).length;
+      countEl.textContent = `${n} of ${rows.length} selected`;
+      submit.disabled = n === 0;
+      submit.querySelector("span").textContent = n === 1 ? "Add 1 event" : `Add ${n} events`;
+    }
+
+    // Grow description boxes to fit their text.
+    function autosize(el) { el.style.height = "auto"; el.style.height = `${el.scrollHeight + 2}px`; }
+
+    rows.forEach((row) => {
+      row.querySelectorAll("textarea").forEach((t) => { autosize(t); t.addEventListener("input", () => autosize(t)); });
+      row.querySelector(".row-all-day").addEventListener("change", () => syncRow(row));
+      row.querySelector(".row-include").addEventListener("change", () => {
+        syncRow(row);
+        syncCount();
+        row.querySelectorAll("textarea").forEach(autosize);  // was hidden, so it had no height yet
+      });
+      syncRow(row);
+    });
+    syncCount();
+  })();
+</script>
+{% endblock %}

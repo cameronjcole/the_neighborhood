@@ -38,6 +38,7 @@
   </div>
   <div class="page-actions">
     <a class="btn btn-secondary" href="{{ url_for('building_edit', building_id=building.id) }}">{{ icon("pencil") }}<span>Edit</span></a>
+    <a class="btn btn-secondary" href="{{ url_for('flyer_upload_page', building_id=building.id) }}">{{ icon("sparkles") }}<span>Import flyer</span></a>
     <a class="btn btn-primary" href="{{ url_for('event_new', building_id=building.id) }}">{{ icon("plus") }}<span>New event</span></a>
   </div>
 </div>
@@ -55,8 +56,11 @@
         <div class="empty-state empty-state-inline">
           <div class="empty-icon">{{ icon("calendar") }}</div>
           <h3>No upcoming events</h3>
-          <p>Add a few events and they'll show up here and on your attendee page.</p>
-          <a class="btn btn-primary" href="{{ url_for('event_new', building_id=building.id) }}">{{ icon("plus") }}<span>New event</span></a>
+          <p>Add events one at a time, or upload your building's flyer and we'll fill them in for you.</p>
+          <div class="btn-row">
+            <a class="btn btn-primary" href="{{ url_for('flyer_upload_page', building_id=building.id) }}">{{ icon("sparkles") }}<span>Import from flyer</span></a>
+            <a class="btn btn-secondary" href="{{ url_for('event_new', building_id=building.id) }}">{{ icon("plus") }}<span>New event</span></a>
+          </div>
         </div>
       {% endif %}
     </div>

@@ -1,0 +1,120 @@
+{% extends "base.html" %}
+{% from "_ui.html" import icon, form_errors %}
+{% block title %}Import from flyer · {{ building.name }}{% endblock %}
+{% block container_class %}container-narrow{% endblock %}
+{% block content %}
+{% set back_url = url_for('building_detail', building_id=building.id) %}
+<a class="back-link" href="{{ back_url }}">{{ icon("chevron-left") }}<span>{{ building.name }}</span></a>
+
+<div class="page-header">
+  <div>
+    <h1>Import events from a flyer</h1>
+    <p class="page-subtitle">Upload your building's event flyer and we'll read it and fill in the events for you to review.</p>
+  </div>
+</div>
+
+<form method="post" enctype="multipart/form-data" class="card form-card" id="upload-form">
+  <input type="hidden" name="csrf" value="{{ csrf_token }}">
+  {{ form_errors(errors) }}
+
+  <div class="form-section">
+    <label class="dropzone" id="dropzone">
+      <input type="file" name="file" id="file-input" class="visually-hidden"
+             accept="image/jpeg,image/png,image/webp,image/gif,application/pdf">
+      <span class="dropzone-empty" id="dropzone-empty">
+        <span class="dropzone-icon">{{ icon("upload") }}</span>
+        <strong>Drop your flyer here, or <span class="text-link">browse</span></strong>
+        <span class="muted small">JPG, PNG, WebP or GIF up to 5 MB · PDF up to 20 MB</span>
+      </span>
+      <span class="dropzone-chosen" id="dropzone-chosen" hidden>
+        <img id="file-preview" alt="" hidden>
+        <span class="file-icon" id="file-icon" hidden>{{ icon("file") }}</span>
+        <span class="file-meta">
+          <strong id="file-name"></strong>
+          <span class="muted small" id="file-size"></span>
+        </span>
+        <span class="btn btn-secondary btn-sm">Change</span>
+      </span>
+    </label>
+    <p class="field-error" id="file-error" hidden></p>
+  </div>
+
+  <div class="form-section">
+    <h2 class="form-section-title">How it works</h2>
+    <ol class="steps">
+      <li><span class="step-num">1</span><div><strong>Upload</strong><span class="muted">A photo, screenshot, or PDF of your flyer.</span></div></li>
+      <li><span class="step-num">2</span><div><strong>We read it</strong><span class="muted">AI picks out each event's name, date, time, location, and details.</span></div></li>
+      <li><span class="step-num">3</span><div><strong>You review</strong><span class="muted">Fix anything that's off and choose which events to add. Nothing is saved until you confirm.</span></div></li>
+    </ol>
+  </div>
+
+  <div class="form-footer">
+    <a class="btn btn-secondary" href="{{ back_url }}">Cancel</a>
+    <button class="btn btn-primary" id="upload-submit" disabled>{{ icon("sparkles") }}<span>Read flyer</span></button>
+  </div>
+</form>
+
+<div class="loading-overlay" id="loading-overlay" hidden>
+  <div class="loading-card">
+    <div class="spinner" aria-hidden="true"></div>
+    <h2>Reading your flyer…</h2>
+    <p class="muted">This usually takes 10–30 seconds.</p>
+  </div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+  (function () {
+    const LIMITS = { "application/pdf": 20 * 1024 * 1024 };
+    const IMAGE_LIMIT = 5 * 1024 * 1024;
+    const input = document.getElementById("file-input");
+    const zone = document.getElementById("dropzone");
+    const empty = document.getElementById("dropzone-empty");
+    const chosen = document.getElementById("dropzone-chosen");
+    const preview = document.getElementById("file-preview");
+    const fileIcon = document.getElementById("file-icon");
+    const error = document.getElementById("file-error");
+    const submit = document.getElementById("upload-submit");
+
+    function formatSize(bytes) {
+      return bytes > 1024 * 1024 ? `${(bytes / 1024 / 1024).toFixed(1)} MB` : `${Math.ceil(bytes / 1024)} KB`;
+    }
+
+    function showFile() {
+      const file = input.files[0];
+      error.hidden = true;
+      if (!file) { empty.hidden = false; chosen.hidden = true; submit.disabled = true; return; }
+      const limit = LIMITS[file.type] || IMAGE_LIMIT;
+      empty.hidden = true;
+      chosen.hidden = false;
+      document.getElementById("file-name").textContent = file.name;
+      document.getElementById("file-size").textContent = formatSize(file.size);
+      const isImage = file.type.startsWith("image/");
+      preview.hidden = !isImage;
+      fileIcon.hidden = isImage;
+      if (isImage) preview.src = URL.createObjectURL(file);
+      const tooBig = file.size > limit;
+      if (tooBig) {
+        error.textContent = `That file is ${formatSize(file.size)}. The limit is ${formatSize(limit)}.`;
+        error.hidden = false;
+      }
+      submit.disabled = tooBig;
+    }
+
+    input.addEventListener("change", showFile);
+    ["dragenter", "dragover"].forEach((t) => zone.addEventListener(t, (e) => { e.preventDefault(); zone.classList.add("is-dragging"); }));
+    ["dragleave", "drop"].forEach((t) => zone.addEventListener(t, () => zone.classList.remove("is-dragging")));
+    zone.addEventListener("drop", (e) => {
+      e.preventDefault();
+      if (e.dataTransfer.files.length) { input.files = e.dataTransfer.files; showFile(); }
+    });
+
+    document.getElementById("upload-form").addEventListener("submit", () => {
+      submit.disabled = true;
+      document.getElementById("loading-overlay").hidden = false;
+    });
+    // If the user navigates back to this page, don't leave the overlay up.
+    window.addEventListener("pageshow", () => { document.getElementById("loading-overlay").hidden = true; showFile(); });
+  })();
+</script>
+{% endblock %}

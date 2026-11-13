@@ -27,7 +27,8 @@ Two interfaces:
 - RSVP or attendee tracking, capacity limits
 - Recurring events (RRULE). Hosts create repeats manually or with "Duplicate"
 - Multiple hosts per building, roles, password reset, email
-- Payments, notifications, images
+- Payments, notifications, event images
+- Camera capture for flyer import (upload only for now)
 
 ## 3. Tech stack
 
@@ -150,14 +151,25 @@ All-day events use `dates=YYYYMMDD/YYYYMMDD` (the end date is exclusive).
 - Response: `Content-Type: text/calendar; charset=utf-8`. The download uses `Content-Disposition: attachment; filename="<building>-events.ics"`, and the feed is served inline.
 - A stable UID means re-importing updates events instead of duplicating them (in clients that honor it).
 
-## 7. Non-functional
+## 7. Flyer import (AI)
+
+Many buildings already make a monthly event flyer. Hosts can upload it and have the events filled in.
+
+- **Entry points:** "Import flyer" on the building page, and "Import from flyer" in the empty state.
+- **Upload** (`GET/POST /buildings/<id>/import`): drag-and-drop or file picker. Accepts JPG, PNG, WebP or GIF images up to 5 MB, and PDFs up to 20 MB. File type is detected from its bytes. No camera capture for now.
+- **Extraction:** one Claude call (`claude-opus-5-5`, effort `medium`) with the file as an image or document block, using structured outputs (a Pydantic `FlyerExtraction` with `events[]` + `warnings[]`). The prompt includes the building's name, address and today's date so the model can resolve a missing year (weekday-matching first). Server-side refusal fallbacks are on.
+- **Review** (`POST /buildings/<id>/import/confirm`): every extracted event is an editable row (title, dates, times, all-day, location, description) next to the uploaded flyer. Events that already happened start unticked (attendees only see upcoming events). A missing end time defaults to +1 hour and is flagged. Nothing is saved until the host clicks "Add N events". Each row is validated like the normal event form.
+- **Errors** are shown inline on the upload page: unsupported or oversized file, missing or invalid API key, rate limit, network, refusal, or no events found.
+- **Config:** API key from the `AI_APIK` env var or an `AI_APIK:<key>` line in `app/.env` (git-ignored). Without it, the SDK falls back to `ANTHROPIC_API_KEY`.
+
+## 8. Non-functional
 - Runs with `python main.py` (or `uvicorn main:app --reload`), listening on `http://localhost:5050` by default (5000 is taken by AirPlay on macOS).
 - The public base URL for QR codes and links is configurable with the `PUBLIC_BASE_URL` env var. It defaults to the request host. To test with a phone on the same Wi-Fi, set it to the machine's LAN IP.
 - `SECRET_KEY` comes from an env var, with a dev fallback.
 - CSRF: forms include a per-session token checked on POST.
 - No JS framework. One small CSS file. Must be usable on a phone.
 
-## 8. Project layout
+## 9. Project layout
 ```
 app/
   main.py           # FastAPI app: middleware, static, routers, error handlers
@@ -165,18 +177,20 @@ app/
   forms.py          # Pydantic form models + validation
   db.py             # sqlite connection, schema, queries
   ics.py            # iCalendar + Google link generation
+  flyer.py          # Claude flyer extraction (schema, prompt, error mapping)
   routes/auth.py    # signup / login / logout
   routes/host.py    # host dashboard (buildings, events, QR)
   routes/public.py  # attendee page + .ics endpoints
+  routes/flyer.py   # flyer upload → review → bulk create
   templates/        # Jinja templates (_ui.html holds shared macros: icons, date tiles, form errors)
   static/style.css  # forest & sage design system, light + dark
   static/app.js     # toasts, copy buttons, confirm dialog
   static/public.js  # select-all / export logic
-  requirements.txt  # fastapi, uvicorn, jinja2, python-multipart, itsdangerous, segno
+  requirements.txt  # fastapi, uvicorn, jinja2, python-multipart, itsdangerous, segno, anthropic
   README.md
 ```
 
-## 9. Acceptance checklist
+## 10. Acceptance checklist
 1. Sign up → create building → add 3 events → they survive a server restart.
 2. Building page shows a working copy-link and a QR code that resolves to `/b/<token>`.
 3. Opening the public link on a phone lists the events with full details.
@@ -185,3 +199,4 @@ app/
 6. Editing an event and re-exporting keeps the same UID.
 7. Regenerating the link makes the old URL return 404.
 8. Host A cannot view or edit Host B's building.
+9. Uploading the sample flyer extracts its events with correct dates, times and locations. Nothing is saved until the host confirms, and ticked rows are created as normal events.
