@@ -1,15 +1,15 @@
-# Building Events — MVP Spec
+# The Neighborhood — MVP Spec
 
 ## 1. Summary
 
-A small web app where apartment building managers ("hosts") publish events for their building, and residents open a shared link or QR code to see those events and add any or all of them to their calendar.
+A small web app where apartment building managers ("hosts") publish events for their building, and attendees open a shared link or QR code to see those events and add any or all of them to their calendar.
 
 Two interfaces:
 
 | Interface | Who | Auth | Purpose |
 |---|---|---|---|
 | **Host dashboard** | Building owners and managers | Email + password | Manage buildings and events, get a share link and QR code |
-| **Public event page** | Residents | None (anyone with the link) | View events, select some or all, export to a calendar |
+| **Public event page** | Attendees | None (anyone with the link) | View events, select some or all, export to a calendar |
 
 ## 2. Goals and non-goals
 
@@ -17,9 +17,9 @@ Two interfaces:
 - A host can sign up, log in, and create a building.
 - A host can create, edit, and delete events (one-off, entered individually) that persist.
 - Each building has one stable public link, plus a QR code (PNG/SVG download and an inline image).
-- A resident can open the link, see full event details, select individual events or all of them, and export:
+- An attendee can open the link, see full event details, select individual events or all of them, and export:
   - **Apple Calendar / Outlook / any calendar** → one `.ics` file containing the selected events.
-  - **Google Calendar** → a per-event "Add to Google" link (Google has no bulk-add URL; for bulk, residents import the `.ics` file).
+  - **Google Calendar** → a per-event "Add to Google" link (Google has no bulk-add URL; for bulk, attendees import the `.ics` file).
   - **Subscribe** (optional bonus) → a `webcal://` feed so the calendar stays in sync as the host adds events.
 - Runs locally with no external services.
 
@@ -110,7 +110,7 @@ Validation: required fields are present, end is after start, and the URL (if giv
 ### Access control
 All host routes require login. A host can only see and modify buildings they own, and anything else returns 404.
 
-## 6. Public event page (residents)
+## 6. Public event page (attendees)
 
 ### Routes
 | Method | Path | Description |
@@ -167,7 +167,7 @@ app/
   ics.py            # iCalendar + Google link generation
   routes/auth.py    # signup / login / logout
   routes/host.py    # host dashboard (buildings, events, QR)
-  routes/public.py  # resident page + .ics endpoints
+  routes/public.py  # attendee page + .ics endpoints
   templates/        # Jinja templates
   static/style.css
   static/public.js  # select-all / export logic

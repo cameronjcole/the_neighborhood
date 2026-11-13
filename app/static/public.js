@@ -1,4 +1,4 @@
-// Resident page: select events and export them.
+// Attendee page: select events and export them.
 (function () {
   const picks = Array.from(document.querySelectorAll(".pick"));
   const selectAll = document.getElementById("select-all");

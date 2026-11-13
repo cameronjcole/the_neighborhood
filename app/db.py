@@ -142,7 +142,7 @@ def create_event(con: Conn, building_id, data):
     cur = con.execute(
         f"""INSERT INTO events (building_id, uid, {", ".join(EVENT_FIELDS)}, created_at, updated_at)
             VALUES (?, ?, {", ".join("?" for _ in EVENT_FIELDS)}, ?, ?)""",
-        (building_id, f"{uuid.uuid4()}@building-events", *(data[f] for f in EVENT_FIELDS), ts, ts),
+        (building_id, f"{uuid.uuid4()}@the-neighborhood", *(data[f] for f in EVENT_FIELDS), ts, ts),
     )
     con.commit()
     return cur.lastrowid

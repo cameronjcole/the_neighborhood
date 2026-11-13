@@ -32,16 +32,16 @@
 </div>
 
 <section class="card share">
-  <img class="qr" src="{{ url_for('building_qr', building_id=building.id, fmt='svg') }}" alt="QR code for the resident event page">
+  <img class="qr" src="{{ url_for('building_qr', building_id=building.id, fmt='svg') }}" alt="QR code for the attendee event page">
   <div class="share-body">
-    <h2>Share with residents</h2>
+    <h2>Share with attendees</h2>
     <p class="muted">Post the QR code in the lobby or paste the link in a newsletter. Anyone with it can view events and add them to their calendar.</p>
     <div class="copy-row">
       <input id="share-url" readonly value="{{ share_url }}">
       <button type="button" onclick="copyShare(this)">Copy link</button>
     </div>
     <div class="button-row">
-      <a class="button" href="{{ share_url }}" target="_blank">Open resident page</a>
+      <a class="button" href="{{ share_url }}" target="_blank">Open attendee page</a>
       <a class="button" href="{{ url_for('building_qr', building_id=building.id, fmt='png') }}?download=1">Download QR (PNG)</a>
       <a class="button" href="{{ url_for('building_qr', building_id=building.id, fmt='svg') }}?download=1">Download QR (SVG)</a>
     </div>

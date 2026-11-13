@@ -18,7 +18,7 @@ async def lifespan(_app: FastAPI):
     yield
 
 
-app = FastAPI(title="Building Events", lifespan=lifespan, docs_url=None, redoc_url=None)
+app = FastAPI(title="The Neighborhood", lifespan=lifespan, docs_url=None, redoc_url=None)
 app.add_middleware(SessionMiddleware, secret_key=os.environ.get("SECRET_KEY", "dev-only-change-me"),
                    same_site="lax", max_age=60 * 60 * 24 * 30)
 app.mount("/static", StaticFiles(directory=os.path.join(BASE_DIR, "static")), name="static")

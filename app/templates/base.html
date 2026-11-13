@@ -3,12 +3,12 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>{% block title %}Building Events{% endblock %}</title>
+  <title>{% block title %}The Neighborhood{% endblock %}</title>
   <link rel="stylesheet" href="{{ url_for('static', path='style.css') }}">
 </head>
 <body>
   <header class="topbar">
-    <a class="brand" href="{{ url_for('index') }}">Building Events</a>
+    <a class="brand" href="{{ url_for('index') }}">The Neighborhood</a>{% block role %}<span class="role">Host</span>{% endblock %}
     {% block nav %}
       {% if logged_in %}
         <form method="post" action="{{ url_for('logout') }}" class="inline">

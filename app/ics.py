@@ -65,7 +65,7 @@ def build_calendar(building, events):
     lines = [
         "BEGIN:VCALENDAR",
         "VERSION:2.0",
-        "PRODID:-//Building Events//MVP//EN",
+        "PRODID:-//The Neighborhood//MVP//EN",
         "CALSCALE:GREGORIAN",
         "METHOD:PUBLISH",
         f"X-WR-CALNAME:{_escape(building['name'])}",

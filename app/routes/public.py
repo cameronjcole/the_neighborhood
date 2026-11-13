@@ -1,4 +1,4 @@
-"""Resident-facing pages. No login; access is by the building's share token."""
+"""Attendee-facing pages. No login; access is by the building's share token."""
 import re
 from datetime import datetime, timedelta, timezone
 from itertools import groupby

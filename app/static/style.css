@@ -118,3 +118,4 @@ form.inline { display: inline; }
 .meta { color: var(--muted); font-size: .925rem; }
 .desc { white-space: pre-line; margin: .5rem 0; overflow-wrap: anywhere; }
 .subscribe { margin-top: 2rem; }
+.brand + .role { margin-left: .5rem; margin-right: auto; padding: .1rem .5rem; border-radius: 999px; background: var(--accent-soft); color: var(--accent); font-size: .75rem; font-weight: 600; }
